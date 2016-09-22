@@ -3,6 +3,8 @@ var urlBase = "https://github.com";
 
 var cardModal = '<div class="modal" style="display: none"></div>';
 var wasDoubleClicked = false;
+var maxBranchNameLength = 50;
+var currentHash = false;
 
 function getCardInformation(url) {
   var card = $('.modal');
@@ -11,6 +13,7 @@ function getCardInformation(url) {
     card.empty();
     var content = $(result).find("[type='text/css'], #show_issue");
     card.html(content);
+    appendBranchName();
     card.modal();
   });
 }
@@ -25,6 +28,20 @@ function getUrlHash() {
 
 function getTicketNumber() {
   return getUrlHash().replace('#', '');
+}
+
+function getBranchName() {
+  if(urlHasHash())
+    return '<p>g' + getTicketNumber() + '-' + $('.js-issue-title').text().trim().toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-').substr(0, maxBranchNameLength)+'</p>';
+  else
+    return false;
+}
+
+function appendBranchName() {
+  var branchName = getBranchName();
+  if(branchName !== false) {
+    $(branchName).appendTo('.flex-table-item-primary');
+  }
 }
 
 function triggerCard() {
@@ -52,6 +69,8 @@ $(document).ready(function(){
     var urlParts = url.split('/');
     var ticketId = urlParts[urlParts.length - 1];
     window.location.href = '#'+ticketId;
+    currentHash = getUrlHash();
+
     getCardInformation(url);
   });
   body.on('dblclick', cardClasses, function(event){
@@ -66,4 +85,10 @@ $(document).ready(function(){
   if(urlHasHash()) {
     triggerCard();
   }
+
+  $(window).on('hashchange', function() {
+    if(currentHash !== false && currentHash !== window.location.hash) {
+      triggerCard();
+    }
+  });
 });
