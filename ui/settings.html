@@ -1,0 +1,27 @@
+<html>
+<head></head>
+<script type="text/javascript" src="../jquery-3.1.0.min.js"></script>
+<script type="text/javascript" src="settings.js"></script>
+<body>
+  <div id="settings">
+    <h2>Label branch suggesting settings</h2>
+    <label for="activateLabelSuggestions">Activate</label><input type="checkbox" id="activateLabelSuggestions">
+    <div id="labels">
+      <div id="labelsList">
+
+      </div>
+      <button id="addNewSuggestion">Add new entry</button>
+    </div>
+    <h2>Git hub command active</h2>
+    <label for="gitHubCommandActive">Activate</label><input type="checkbox" id="gitHubCommandActive">
+    <div id="hubCommand">
+      <label for="defaultBranch">Default branch: </label><input type="text" id="defaultBranch">
+    </div>
+
+    <h2>Maximum length branch name</h2>
+    <label for="maximumBranchLength">Maximum branch name length:</label><input type="number" id="maximumBranchLength">
+
+  </div>
+<button id="resetSettings">Reset Settings</button> - <button id="saveOptions">Save</button>
+</body>
+</html>

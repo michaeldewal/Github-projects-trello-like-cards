@@ -1,23 +1,106 @@
+// set initial settings
+var prefix = "gitlo-";
+
+// suggest branch name on labels
+var isSuggestLabelBranchTypeActive = localStorage.getItem(prefix + 'suggest-label-branch-type-active');
+if(isSuggestLabelBranchTypeActive === null) {
+  var defaultSuggestLabelActive = true;
+  localStorage.setItem(prefix + 'suggest-label-branch-type-active', defaultSuggestLabelActive);
+  isSuggestLabelBranchTypeActive = defaultSuggestLabelActive;
+}
+
+// labels to convert
+var suggestedLabels = localStorage.getItem(prefix + 'suggested-labels');
+if(suggestedLabels === null || suggestedLabels === 'undefined') {
+  var defaultSuggestedLabels = [
+    {
+      "orig": "feature",
+      "sugg": "feature"
+    },
+    {
+      "orig": "bug",
+      "sugg": "fix"
+    },
+    {
+      "orig": "chore",
+      "sugg": "chore"
+    },
+    {
+      "orig": "hotfix",
+      "sugg": "hotfix"
+    }
+  ];
+  localStorage.setItem(prefix + 'suggested-labels', JSON.stringify(defaultSuggestedLabels));
+  suggestedLabels = defaultSuggestedLabels;
+} else {
+  suggestedLabels = JSON.parse(suggestedLabels);
+}
+
+// Add git hub command for using issue as PR active
+var isHubCommandActive = localStorage.getItem(prefix + 'hub-command-active');
+if(isHubCommandActive === null) {
+  var defaultIsHubCommandActive = true;
+  localStorage.setItem(prefix + 'hub-command-active', defaultIsHubCommandActive);
+  isHubCommandActive = defaultIsHubCommandActive;
+}
+
+// Add git hub command for using issue as PR active
+var hubCommentBranch = localStorage.getItem(prefix + 'hub-command-default-branch');
+if(hubCommentBranch === null) {
+  var hubCommandDefaultBranch = 'develop';
+  localStorage.setItem(prefix + 'hub-command-default-branch', hubCommandDefaultBranch);
+  isHubCommandActive = hubCommandDefaultBranch;
+}
+
+var maxBranchNameLength = localStorage.getItem(prefix + 'max-branch-name-length');
+if(maxBranchNameLength === null) {
+  var defaultMaxBranchNameLength = 50;
+  localStorage.setItem(prefix + 'max-branch-name-length', defaultMaxBranchNameLength);
+  maxBranchNameLength = defaultMaxBranchNameLength;
+}
+
 var cardClasses = ".issue-card h5 > a, .project-card h5 > a";
 var urlBase = "https://github.com";
 
 var cardModal = '<div class="modal" style="display: none"></div>';
 var wasDoubleClicked = false;
-var maxBranchNameLength = 50;
 var currentHash = false;
-var gitHubCommand = "hub pull-request -i [ticketId] -b [ORIGINAL_AUTHOR]:[ORIGINAL_AUTHOR_BRANCH] -h [FROM_USER]:feature/g8-git-hub-command";
+var gitHubCommand = "hub pull-request -i [ticketId] -b [ORIGINAL_AUTHOR]:[ORIGINAL_AUTHOR_BRANCH] -h [FROM_USER]:[FROM_BRANCH]";
 
 function getCardInformation(url) {
   var card = $('.modal');
   $.ajax(urlBase+ url).done(function(result){
     if(wasDoubleClicked) return false;
     card.empty();
-    var content = $(result).find("[type='text/css'], #show_issue");
-    card.html(content);
-    appendBranchName();
-    appendGitHubCommand();
+    var content = $(result).find(".issues-listing");
+    content.find(".tabnav").remove();
+    content.appendTo(card);
+    if(isSuggestLabelBranchTypeActive) {
+      appendBranchName();
+    }
+
+    if(isHubCommandActive) {
+      appendGitHubCommand();
+    }
+
     card.modal();
   });
+}
+
+function getBranchNamePrefix() {
+  var suggestedName = '';
+  if(isSuggestLabelBranchTypeActive) {
+    $('.labels').find('a').each(function () {
+      var name = $(this).text().toLowerCase();
+      suggestedLabels.forEach(function (item) {
+        if (item.orig === name) {
+          suggestedName = item.sugg;
+        }
+      });
+    });
+    return suggestedName + '/';
+  }
+  return suggestedName;
 }
 
 function getOriginalAuthor() {
@@ -25,13 +108,14 @@ function getOriginalAuthor() {
 }
 
 function getGitHubCommand() {
-  return '<p>'
+  return '<p><strong>Hub command: </strong><input style="width: 100%" type="text" value="'
     + gitHubCommand.
-    replace('[ticketId]', getTicketNumber).
-    replace('[ORIGINAL_AUTHOR]', getOriginalAuthor).
+    replace('[ticketId]', getTicketNumber()).
+    replace('[ORIGINAL_AUTHOR]', getOriginalAuthor()).
     replace('[ORIGINAL_AUTHOR_BRANCH]', 'develop').
-    replace('[FROM_USER]', getOriginalAuthor)
-  + '</p>';
+    replace('[FROM_USER]', getOriginalAuthor()).
+    replace('[FROM_BRANCH]', getBranchNamePrefix()+ getBranchName())
+  + '"></p>';
 }
 
 function appendGitHubCommand() {
@@ -52,13 +136,13 @@ function getTicketNumber() {
 
 function getBranchName() {
   if(urlHasHash())
-    return '<p>g' + getTicketNumber() + '-' + $('.js-issue-title').text().trim().toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-').substr(0, maxBranchNameLength)+'</p>';
+    return 'g' + getTicketNumber() + '-' + $('.js-issue-title').text().trim().toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-').substr(0, maxBranchNameLength);
   else
     return false;
 }
 
 function appendBranchName() {
-  var branchName = getBranchName();
+  var branchName = '<p><strong>Branch: </strong><input style="width: 100%" type="text" value="' + getBranchNamePrefix() + getBranchName() + '"></p>';
   if(branchName !== false) {
     $(branchName).appendTo('.flex-table-item-primary');
   }
