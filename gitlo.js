@@ -72,7 +72,7 @@ function getCardInformation(url) {
   $.ajax(urlBase+ url).done(function(result){
     if(wasDoubleClicked) return false;
     card.empty();
-    var content = $(result).find(".issues-listing");
+    var content = $(result).find("[type='text/css'], .issues-listing");
     content.find(".tabnav").remove();
     content.appendTo(card);
     if(isSuggestLabelBranchTypeActive) {
@@ -115,7 +115,7 @@ function getGitHubCommand() {
     replace('[ORIGINAL_AUTHOR_BRANCH]', 'develop').
     replace('[FROM_USER]', getOriginalAuthor()).
     replace('[FROM_BRANCH]', getBranchNamePrefix()+ getBranchName())
-  + '"></p>';
+    + '"></p>';
 }
 
 function appendGitHubCommand() {
