@@ -5,6 +5,7 @@ var cardModal = '<div class="modal" style="display: none"></div>';
 var wasDoubleClicked = false;
 var maxBranchNameLength = 50;
 var currentHash = false;
+var gitHubCommand = "hub pull-request -i [ticketId] -b [ORIGINAL_AUTHOR]:[ORIGINAL_AUTHOR_BRANCH] -h [FROM_USER]:feature/g8-git-hub-command";
 
 function getCardInformation(url) {
   var card = $('.modal');
@@ -14,8 +15,27 @@ function getCardInformation(url) {
     var content = $(result).find("[type='text/css'], #show_issue");
     card.html(content);
     appendBranchName();
+    appendGitHubCommand();
     card.modal();
   });
+}
+
+function getOriginalAuthor() {
+  return window.location.pathname.split('/')[1];
+}
+
+function getGitHubCommand() {
+  return '<p>'
+    + gitHubCommand.
+    replace('[ticketId]', getTicketNumber).
+    replace('[ORIGINAL_AUTHOR]', getOriginalAuthor).
+    replace('[ORIGINAL_AUTHOR_BRANCH]', 'develop').
+    replace('[FROM_USER]', getOriginalAuthor)
+  + '</p>';
+}
+
+function appendGitHubCommand() {
+  $(getGitHubCommand()).appendTo('.flex-table-item-primary');
 }
 
 function urlHasHash() {
