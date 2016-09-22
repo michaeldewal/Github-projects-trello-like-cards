@@ -3,6 +3,7 @@ var urlBase = "https://github.com";
 
 var cardModal = '<div class="modal" style="display: none"></div>';
 var wasDoubleClicked = false;
+var currentHash = false;
 
 function getCardInformation(url) {
   var card = $('.modal');
@@ -52,6 +53,8 @@ $(document).ready(function(){
     var urlParts = url.split('/');
     var ticketId = urlParts[urlParts.length - 1];
     window.location.href = '#'+ticketId;
+    currentHash = getUrlHash();
+
     getCardInformation(url);
   });
   body.on('dblclick', cardClasses, function(event){
@@ -66,4 +69,10 @@ $(document).ready(function(){
   if(urlHasHash()) {
     triggerCard();
   }
+
+  $(window).on('hashchange', function() {
+    if(currentHash !== false && currentHash !== window.location.hash) {
+      triggerCard();
+    }
+  });
 });
