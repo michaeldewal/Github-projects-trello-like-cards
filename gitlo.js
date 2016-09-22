@@ -3,6 +3,7 @@ var urlBase = "https://github.com";
 
 var cardModal = '<div class="modal" style="display: none"></div>';
 var wasDoubleClicked = false;
+var maxBranchNameLength = 50;
 
 function getCardInformation(url) {
   var card = $('.modal');
@@ -11,6 +12,7 @@ function getCardInformation(url) {
     card.empty();
     var content = $(result).find("[type='text/css'], #show_issue");
     card.html(content);
+    appendBranchName();
     card.modal();
   });
 }
@@ -25,6 +27,20 @@ function getUrlHash() {
 
 function getTicketNumber() {
   return getUrlHash().replace('#', '');
+}
+
+function getBranchName() {
+  if(urlHasHash())
+    return '<p>g' + getTicketNumber() + '-' + $('.js-issue-title').text().trim().toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-').substr(0, maxBranchNameLength)+'</p>';
+  else
+    return false;
+}
+
+function appendBranchName() {
+  var branchName = getBranchName();
+  if(branchName !== false) {
+    $(branchName).appendTo('.flex-table-item-primary');
+  }
 }
 
 function triggerCard() {
