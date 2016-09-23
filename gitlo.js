@@ -136,7 +136,7 @@ function getTicketNumber() {
 
 function getBranchName() {
   if(urlHasHash())
-    return 'g' + getTicketNumber() + '-' + $('.js-issue-title').text().trim().toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-').substr(0, maxBranchNameLength);
+    return 'g' + getTicketNumber() + '-' + $('.js-issue-title').text().trim().toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-').substr(0, maxBranchNameLength).replace(/-+$/, "");
   else
     return false;
 }
