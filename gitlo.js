@@ -1,18 +1,14 @@
-// set initial settings
-var prefix = "gitlo-";
+var settings = [
+  'gitlo.suggest-label-branch-type-active',
+  'gitlo.suggested-labels',
+  'gitlo.hub-command-active',
+  'gitlo.hub-command-default-branch',
+  'gitlo.max-branch-name-length'
+];
 
-// suggest branch name on labels
-var isSuggestLabelBranchTypeActive = localStorage.getItem(prefix + 'suggest-label-branch-type-active');
-if(isSuggestLabelBranchTypeActive === null) {
-  var defaultSuggestLabelActive = true;
-  localStorage.setItem(prefix + 'suggest-label-branch-type-active', defaultSuggestLabelActive);
-  isSuggestLabelBranchTypeActive = defaultSuggestLabelActive;
-}
-
-// labels to convert
-var suggestedLabels = localStorage.getItem(prefix + 'suggested-labels');
-if(suggestedLabels === null || suggestedLabels === 'undefined') {
-  var defaultSuggestedLabels = [
+var settingsObject = {
+  'gitlo.suggest-label-branch-type-active': true,
+  'gitlo.suggested-labels': [
     {
       "orig": "feature",
       "sugg": "feature"
@@ -29,35 +25,28 @@ if(suggestedLabels === null || suggestedLabels === 'undefined') {
       "orig": "hotfix",
       "sugg": "hotfix"
     }
-  ];
-  localStorage.setItem(prefix + 'suggested-labels', JSON.stringify(defaultSuggestedLabels));
-  suggestedLabels = defaultSuggestedLabels;
-} else {
-  suggestedLabels = JSON.parse(suggestedLabels);
-}
+  ],
+  'gitlo.hub-command-active': true,
+  'gitlo.hub-command-default-branch': 'develop',
+  'gitlo.max-branch-name-length': 50
+};
 
-// Add git hub command for using issue as PR active
-var isHubCommandActive = localStorage.getItem(prefix + 'hub-command-active');
-if(isHubCommandActive === null) {
-  var defaultIsHubCommandActive = true;
-  localStorage.setItem(prefix + 'hub-command-active', defaultIsHubCommandActive);
-  isHubCommandActive = defaultIsHubCommandActive;
-}
+chrome.storage.sync.get(settings, function(items){
 
-// Add git hub command for using issue as PR active
-var hubCommentBranch = localStorage.getItem(prefix + 'hub-command-default-branch');
-if(hubCommentBranch === null) {
-  var hubCommandDefaultBranch = 'develop';
-  localStorage.setItem(prefix + 'hub-command-default-branch', hubCommandDefaultBranch);
-  isHubCommandActive = hubCommandDefaultBranch;
-}
+  $.each(items, function(key, value){
+    if(typeof value !== 'undefined') {
+      if(key == 'gitlo.suggested-labels'){
+        settingsObject[key] = jQuery.parseJSON(value);
+      } else {
+        settingsObject[key] = value;
+      }
+    }
+  });
 
-var maxBranchNameLength = localStorage.getItem(prefix + 'max-branch-name-length');
-if(maxBranchNameLength === null) {
-  var defaultMaxBranchNameLength = 50;
-  localStorage.setItem(prefix + 'max-branch-name-length', defaultMaxBranchNameLength);
-  maxBranchNameLength = defaultMaxBranchNameLength;
-}
+  if (chrome.runtime.error) {
+    console.log("Runtime error.");
+  }
+});
 
 var cardClasses = ".issue-card h5 > a, .project-card h5 > a";
 var urlBase = "https://github.com";
@@ -75,11 +64,11 @@ function getCardInformation(url) {
     var content = $(result).find("[type='text/css'], .issues-listing");
     content.find(".tabnav").remove();
     content.appendTo(card);
-    if(isSuggestLabelBranchTypeActive) {
+    if(settingsObject['gitlo.suggest-label-branch-type-active']) {
       appendBranchName();
     }
 
-    if(isHubCommandActive) {
+    if(settingsObject['gitlo.hub-command-active']) {
       appendGitHubCommand();
     }
 
@@ -89,10 +78,10 @@ function getCardInformation(url) {
 
 function getBranchNamePrefix() {
   var suggestedName = '';
-  if(isSuggestLabelBranchTypeActive) {
+  if(settingsObject['gitlo.suggest-label-branch-type-active']) {
     $('.labels').find('a').each(function () {
       var name = $(this).text().toLowerCase();
-      suggestedLabels.forEach(function (item) {
+      settingsObject['gitlo.suggested-labels'].forEach(function (item) {
         if (item.orig === name) {
           suggestedName = item.sugg;
         }
@@ -112,7 +101,7 @@ function getGitHubCommand() {
     + gitHubCommand.
     replace('[ticketId]', getTicketNumber()).
     replace('[ORIGINAL_AUTHOR]', getOriginalAuthor()).
-    replace('[ORIGINAL_AUTHOR_BRANCH]', 'develop').
+    replace('[ORIGINAL_AUTHOR_BRANCH]', settingsObject['gitlo.hub-command-default-branch']).
     replace('[FROM_USER]', getOriginalAuthor()).
     replace('[FROM_BRANCH]', getBranchNamePrefix()+ getBranchName())
     + '"></p>';
@@ -136,7 +125,7 @@ function getTicketNumber() {
 
 function getBranchName() {
   if(urlHasHash())
-    return 'g' + getTicketNumber() + '-' + $('.js-issue-title').text().trim().toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-').substr(0, maxBranchNameLength).replace(/-+$/, "");
+    return 'g' + getTicketNumber() + '-' + $('.js-issue-title').text().trim().toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-').substr(0, settingsObject['gitlo.max-branch-name-length']).replace(/-+$/, "");
   else
     return false;
 }
