@@ -1,18 +1,14 @@
-// set initial settings
-var prefix = "gitlo-";
+var settings = [
+  'gitlo.suggest-label-branch-type-active',
+  'gitlo.suggested-labels',
+  'gitlo.hub-command-active',
+  'gitlo.hub-command-default-branch',
+  'gitlo.max-branch-name-length'
+];
 
-// suggest branch name on labels
-var isSuggestLabelBranchTypeActive = localStorage.getItem(prefix + 'suggest-label-branch-type-active');
-if(isSuggestLabelBranchTypeActive === null) {
-  var defaultSuggestLabelActive = true;
-  localStorage.setItem(prefix + 'suggest-label-branch-type-active', defaultSuggestLabelActive);
-  isSuggestLabelBranchTypeActive = defaultSuggestLabelActive;
-}
-
-// labels to convert
-var suggestedLabels = localStorage.getItem(prefix + 'suggested-labels');
-if(suggestedLabels === null || suggestedLabels === 'undefined') {
-  var defaultSuggestedLabels = [
+var settingsObject = {
+  'gitlo.suggest-label-branch-type-active': true,
+  'gitlo.suggested-labels': [
     {
       "orig": "feature",
       "sugg": "feature"
@@ -29,41 +25,34 @@ if(suggestedLabels === null || suggestedLabels === 'undefined') {
       "orig": "hotfix",
       "sugg": "hotfix"
     }
-  ];
-  localStorage.setItem(prefix + 'suggested-labels', JSON.stringify(defaultSuggestedLabels));
-  suggestedLabels = defaultSuggestedLabels;
-} else {
-  suggestedLabels = JSON.parse(suggestedLabels);
-}
+  ],
+  'gitlo.hub-command-active': true,
+  'gitlo.hub-command-default-branch': 'develop',
+  'gitlo.max-branch-name-length': 50
+};
 
-// Add git hub command for using issue as PR active
-var isHubCommandActive = localStorage.getItem(prefix + 'hub-command-active');
-if(isHubCommandActive === null) {
-  var defaultIsHubCommandActive = true;
-  localStorage.setItem(prefix + 'hub-command-active', defaultIsHubCommandActive);
-  isHubCommandActive = defaultIsHubCommandActive;
-}
+chrome.storage.sync.get(settings, function(items){
+  $.each(items, function(key, value){
+    if(typeof value !== 'undefined') {
+      if(key == 'gitlo.suggested-labels'){
+        settingsObject[key] = jQuery.parseJSON(value);
+      } else {
+        settingsObject[key] = value;
+      }
+    }
+  });
 
-// Add git hub command for using issue as PR active
-var hubCommentBranch = localStorage.getItem(prefix + 'hub-command-default-branch');
-if(hubCommentBranch === null) {
-  var hubCommandDefaultBranch = 'develop';
-  localStorage.setItem(prefix + 'hub-command-default-branch', hubCommandDefaultBranch);
-  hubCommentBranch = hubCommandDefaultBranch;
-}
+  if (chrome.runtime.error) {
+    console.log("Runtime error.");
+  }
+});
 
-var maxBranchNameLength = localStorage.getItem(prefix + 'max-branch-name-length');
-if(maxBranchNameLength === null) {
-  var defaultMaxBranchNameLength = 50;
-  localStorage.setItem(prefix + 'max-branch-name-length', defaultMaxBranchNameLength);
-  maxBranchNameLength = defaultMaxBranchNameLength;
-}
 
 // Add labels to document
 var suggLabelsCount = 0;
 function createLabelOutput() {
   var labelOutput = '';
-  suggestedLabels.forEach(function(label, key){
+  settingsObject['gitlo.suggested-labels'].forEach(function(label, key){
     labelOutput += '<p><input type="text" data-id="'+key+'" id="orig_'+key+'" value="'+label.orig+'">:<input type="text" data-id="'+key+'" id="sugg_'+key+'" value="'+label.sugg+'"></p>';
   suggLabelsCount++;
   });
@@ -104,23 +93,25 @@ $(document).ready(function(){
 
   // Check for label suggest checkbox value change
   activateLabelSuggestions.on('change', function(event) {
-    localStorage.setItem(prefix + 'suggest-label-branch-type-active', $(this).is(":checked"));
-    $('#labels').toggle();
+    chrome.storage.sync.set({'gitlo.suggest-label-branch-type-active': $(this).is(":checked")}, function() {
+      $('#labels').toggle();
+    });
   });
 
   // Check for git hub command active
   activateGitHub.on('change', function(event) {
-    localStorage.setItem(prefix + 'hub-command-active', $(this).is(":checked"));
-    $('#hubCommand').toggle();
+    chrome.storage.sync.set({'gitlo.hub-command-active': $(this).is(":checked")}, function() {
+      $('#hubCommand').toggle();
+    });
   });
 
   // Label for branch default checkbox
-  if(isSuggestLabelBranchTypeActive) {
+  if(settingsObject['gitlo.suggest-label-branch-type-active']) {
     setCheckBoxValue(activateLabelSuggestions, true);
   }
 
   // set git hub active checkbox
-  if(isHubCommandActive) {
+  if(settingsObject['gitlo.hub-command-active']) {
     setCheckBoxValue(activateGitHub, true);
   }
 
@@ -129,8 +120,8 @@ $(document).ready(function(){
   $(createLabelOutput()).appendTo(labels);
 
   // Set maximum length branch name
-  branchNameLength.val(maxBranchNameLength);
-  $('#defaultBranch').val(localStorage.getItem(prefix + 'hub-command-default-branch'));
+  branchNameLength.val(settingsObject['gitlo.max-branch-name-length']);
+  $('#defaultBranch').val(settingsObject['gitlo.hub-command-default-branch']);
 
   // Click add new label
   $('#addNewSuggestion').click(function(){
@@ -140,26 +131,21 @@ $(document).ready(function(){
   // Click save options
   $('#saveOptions').click(function(){
     // Set branch name length
-    localStorage.setItem(prefix + 'max-branch-name-length', branchNameLength.val());
-
-    // label suggestions active
-    localStorage.setItem(prefix + 'suggest-label-branch-type-active', $('#activateLabelSuggestions').is(":checked"));
-
-    // save hub options
-    localStorage.setItem(prefix + 'hub-command-active', $('#gitHubCommandActive').is(":checked"));
-
-    // Saving labels
-    localStorage.setItem(prefix + 'suggested-labels', JSON.stringify(getLabelsArray()));
-
-    localStorage.setItem(prefix + 'hub-command-default-branch', $('#defaultBranch').val());
+    chrome.storage.sync.set({
+      'gitlo.max-branch-name-length': branchNameLength.val(),
+      'gitlo.suggest-label-branch-type-active': $('#activateLabelSuggestions').is(":checked"),
+      'gitlo.hub-command-active': $('#gitHubCommandActive').is(":checked"),
+      'gitlo.suggested-labels': JSON.stringify(getLabelsArray()),
+      'gitlo.hub-command-default-branch': $('#defaultBranch').val()
+    });
   });
 
   // Click reset
   $('#resetSettings').click(function(){
-    localStorage.removeItem(prefix + 'suggest-label-branch-type-active');
-    localStorage.removeItem(prefix + 'suggested-labels');
-    localStorage.removeItem(prefix + 'hub-command-active');
-    localStorage.removeItem(prefix + 'max-branch-name-length');
-    localStorage.removeItem(prefix + 'hub-command-default-branch');
+    chrome.storage.sync.remove('gitlo.suggest-label-branch-type-active');
+    chrome.storage.sync.remove('gitlo.suggested-labels');
+    chrome.storage.sync.remove('gitlo.hub-command-active');
+    chrome.storage.sync.remove('gitlo.max-branch-name-length');
+    chrome.storage.sync.remove('gitlo.hub-command-default-branch');
   });
 });
