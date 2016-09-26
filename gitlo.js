@@ -62,7 +62,18 @@ function getCardInformation(url) {
     if(wasDoubleClicked) return false;
     card.empty();
     var content = $(result).find("[type='text/css'], .issues-listing");
+    var css = false;
+    if($(result).find("[type='text/css']").length > 0) {
+      localStorage.setItem('gitlo.cardCSS', $(result).find("[type='text/css']").html());
+    } else {
+      css = localStorage.getItem('gitlo.cardCSS');
+    }
+
+
     content.find(".tabnav").remove();
+    if(css !== false && css !== null) {
+      card.append('<style type="text/css" >'+css+'</style>');
+    }
     content.appendTo(card);
     if(settingsObject['gitlo.suggest-label-branch-type-active']) {
       appendBranchName();
