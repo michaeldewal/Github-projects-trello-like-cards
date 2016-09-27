@@ -72,6 +72,8 @@ function getCardInformation(url) {
 
 
     content.find(".tabnav").remove();
+    content.find(".discussion-timeline").attr('style', 'width:70% !important;');
+    content.find(".discussion-sidebar").attr('style', 'width:25% !important;');
     if(css !== false && css !== null) {
       card.append('<style type="text/css" >'+css+'</style>');
     }
