@@ -55,6 +55,7 @@ var cardModal = '<div class="modal" style="display: none"></div>';
 var wasDoubleClicked = false;
 var currentHash = false;
 var gitHubCommand = "hub pull-request -i [ticketId] -b [ORIGINAL_AUTHOR]:[ORIGINAL_AUTHOR_BRANCH] -h [FROM_USER]:[FROM_BRANCH]";
+var createBranchCommand = 'git checkout -b ';
 
 function getCardInformation(url) {
   var card = $('.modal');
@@ -108,7 +109,7 @@ function getOriginalAuthor() {
 }
 
 function getGitHubCommand() {
-  return '<p><strong>Hub command: </strong><input style="width: 100%" type="text" value="'
+  return '<p><strong>Hub command: </strong><input style="width: 70%" type="text" value="'
     + gitHubCommand.
     replace('[ticketId]', getTicketNumber()).
     replace('[ORIGINAL_AUTHOR]', getOriginalAuthor()).
@@ -142,7 +143,7 @@ function getBranchName() {
 }
 
 function appendBranchName() {
-  var branchName = '<p><strong>Branch: </strong><input style="width: 100%" type="text" value="' + getBranchNamePrefix() + getBranchName() + '"></p>';
+  var branchName = '<p><strong>Branch: </strong><input style="width: 70%" type="text" value="' + createBranchCommand + getBranchNamePrefix() + getBranchName() + '"></p>';
   if(branchName !== false) {
     $(branchName).appendTo('.flex-table-item-primary');
   }
